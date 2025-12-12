@@ -23,6 +23,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, isLoading, error }) => {
     setPass('123456');
   };
 
+  const quickLogin = () => {
+    onLogin({
+      email: 'admin@obsidian.ai',
+      pass: '123456'
+    });
+  };
+
   return (
     <div className="w-full max-w-[420px] relative z-10 px-4">
       {/* Decorative ambient background elements behind the card */}
@@ -95,16 +102,32 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, isLoading, error }) => {
       
       {/* Footer / Demo Link */}
       <div className="text-center mt-8 space-y-4">
-        <button 
-          type="button"
-          onClick={fillDemoCredentials}
-          className="group inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.04] bg-white/[0.01] hover:bg-white/[0.03] transition-all"
-        >
-          <UserCircle size={12} className="text-obsidian-text-muted group-hover:text-obsidian-accent transition-colors" />
-          <span className="text-[9px] text-obsidian-text-muted group-hover:text-white font-medium tracking-widest uppercase">
-            Use Demo Account
-          </span>
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+          <button
+            type="button"
+            onClick={quickLogin}
+            disabled={isLoading}
+            className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-obsidian-accent/10 border border-obsidian-accent/30 hover:bg-obsidian-accent/20 hover:border-obsidian-accent/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-obsidian-accent animate-pulse" />
+            <span className="text-[10px] text-obsidian-accent group-hover:text-white font-medium tracking-widest uppercase">
+              Acceso Rápido Demo
+            </span>
+            <ArrowRight size={12} className="text-obsidian-accent group-hover:text-white" />
+          </button>
+
+          <button
+            type="button"
+            onClick={fillDemoCredentials}
+            disabled={isLoading}
+            className="group inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.04] bg-white/[0.01] hover:bg-white/[0.03] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <UserCircle size={12} className="text-obsidian-text-muted group-hover:text-obsidian-accent transition-colors" />
+            <span className="text-[9px] text-obsidian-text-muted group-hover:text-white font-medium tracking-widest uppercase">
+              Llenar Credenciales
+            </span>
+          </button>
+        </div>
 
         <p className="text-[10px] text-obsidian-text-muted/30 font-thin tracking-[0.3em]">
           V 2.0.4 — OBSIDIAN DARK UI
