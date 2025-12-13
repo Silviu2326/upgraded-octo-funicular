@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 // --- Obsidian Card (War Room Spec) ---
 // Features: Backdrop blur, inner top highlight, deep drop shadow, breathing border capability
@@ -200,7 +200,7 @@ interface ObsidianSwitchProps {
 
 export const ObsidianSwitch: React.FC<ObsidianSwitchProps> = ({ label, checked, onChange }) => {
   return (
-    <div 
+    <div
       className="flex items-center justify-between cursor-pointer group py-2"
       onClick={() => onChange(!checked)}
     >
@@ -217,5 +217,92 @@ export const ObsidianSwitch: React.FC<ObsidianSwitchProps> = ({ label, checked, 
         `} />
       </div>
     </div>
+  );
+};
+
+// --- Obsidian Tooltip ---
+interface ObsidianTooltipProps {
+  content: string | React.ReactNode;
+  children: React.ReactNode;
+  position?: 'top' | 'bottom' | 'left' | 'right';
+}
+
+export const ObsidianTooltip: React.FC<ObsidianTooltipProps> = ({
+  content,
+  children,
+  position = 'top'
+}) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = () => {
+    if (triggerRef.current && tooltipRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+
+      let x = rect.left + rect.width / 2;
+      let y = rect.top;
+
+      if (position === 'top') {
+        y = rect.top - 10;
+      } else if (position === 'bottom') {
+        y = rect.bottom + 10;
+      } else if (position === 'left') {
+        x = rect.left - 10;
+        y = rect.top + rect.height / 2;
+      } else if (position === 'right') {
+        x = rect.right + 10;
+        y = rect.top + rect.height / 2;
+      }
+
+      setCoords({ x, y });
+      setIsVisible(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsVisible(false);
+  };
+
+  // Get transform based on position
+  const getTransform = () => {
+    if (position === 'top' || position === 'bottom') {
+      return 'translateX(-50%)';
+    } else {
+      return 'translateY(-50%)';
+    }
+  };
+
+  return (
+    <>
+      <span
+        ref={triggerRef}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className="inline-block"
+      >
+        {children}
+      </span>
+
+      {isVisible && (
+        <div
+          ref={tooltipRef}
+          className="fixed z-[9999] pointer-events-none animate-[fadeIn_0.15s_ease-out]"
+          style={{
+            left: coords.x,
+            top: coords.y,
+            transform: getTransform()
+          }}
+        >
+          <div className="bg-[#0F0F12]/98 backdrop-blur-md border border-white/[0.2] rounded px-3 py-2 shadow-obsidian-deep max-w-xs">
+            <div className="text-[11px] text-white leading-relaxed">
+              {content}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };

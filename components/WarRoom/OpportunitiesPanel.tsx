@@ -1,7 +1,7 @@
 import React from 'react';
-import { Zap, TrendingUp, DollarSign } from 'lucide-react';
+import { Zap, TrendingUp, DollarSign, HelpCircle } from 'lucide-react';
 import type { Opportunity } from '../../hooks/useWarRoom';
-import { ObsidianCard } from '../ui/ObsidianElements';
+import { ObsidianCard, ObsidianTooltip } from '../ui/ObsidianElements';
 
 interface OpportunitiesPanelProps {
   opportunities: Opportunity[];
@@ -58,7 +58,12 @@ export const OpportunitiesPanel: React.FC<OpportunitiesPanelProps> = ({ opportun
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-xs text-obsidian-text-muted">Valor Estimado</div>
+                <div className="text-xs text-obsidian-text-muted flex items-center justify-end gap-1">
+                  Valor Estimado
+                  <ObsidianTooltip content="Valor monetario estimado de la oportunidad basado en análisis predictivo y datos históricos del mercado." position="left">
+                    <HelpCircle size={10} className="cursor-help opacity-50 hover:opacity-100 transition-opacity" />
+                  </ObsidianTooltip>
+                </div>
                 <div className="text-lg font-thin text-obsidian-success tabular-nums">
                   ${topOpportunity.value.toLocaleString()}
                 </div>
@@ -66,15 +71,21 @@ export const OpportunitiesPanel: React.FC<OpportunitiesPanelProps> = ({ opportun
             </div>
 
             <div className="flex items-center gap-4 mb-3">
-              <div>
+              <div className="flex items-center gap-1">
                 <span className="text-[10px] text-obsidian-text-muted">Probabilidad: </span>
                 <span className="text-sm text-white font-medium">{topOpportunity.probability}%</span>
+                <ObsidianTooltip content="Probabilidad de éxito calculada por el modelo predictivo del enjambre basándose en múltiples variables del mercado." position="top">
+                  <HelpCircle size={9} className="cursor-help opacity-40 hover:opacity-100 transition-opacity" />
+                </ObsidianTooltip>
               </div>
-              <div>
+              <div className="flex items-center gap-1">
                 <span className="text-[10px] text-obsidian-text-muted">Riesgo: </span>
                 <span className={`text-sm font-medium uppercase ${getRiskColor(topOpportunity.risk)}`}>
                   {topOpportunity.risk}
                 </span>
+                <ObsidianTooltip content="Nivel de riesgo evaluado: validated (validado), low (bajo), medium (medio), high (alto). Basado en volatilidad y factores externos." position="top">
+                  <HelpCircle size={9} className="cursor-help opacity-40 hover:opacity-100 transition-opacity" />
+                </ObsidianTooltip>
               </div>
             </div>
 

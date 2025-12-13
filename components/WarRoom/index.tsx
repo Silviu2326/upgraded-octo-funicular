@@ -5,3 +5,4 @@ export { OpportunitiesPanel } from './OpportunitiesPanel';
 export { AlertsPanel } from './AlertsPanel';
 export { RevenueChart } from './RevenueChart';
 export { SystemMetrics } from './SystemMetrics';
+export { MarketTopology } from './MarketTopology';

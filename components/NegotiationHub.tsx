@@ -5,200 +5,214 @@ import {
   Plus, TrendingUp, TrendingDown, DollarSign, Clock, Users, Eye, Pause,
   PlayCircle, StopCircle, Calendar, Target, MessageSquare, Activity,
   FileText, Download, Share2, ArrowLeft, ChevronRight, Zap, AlertCircle,
-  CheckCircle, XCircle, Edit2, Trash2, BarChart3, Hash
+  CheckCircle, XCircle, Edit2, Trash2, BarChart3, Hash, RefreshCw, History,
+  ArrowRight, X, Send
 } from 'lucide-react';
 
 // --- Types ---
-type ViewMode = 'dashboard' | 'create' | 'detail' | 'contract' | 'history';
-type NegotiationType = 'BUY' | 'SELL';
 type NegotiationStatus = 'ACTIVE' | 'PAUSED' | 'CLOSED' | 'FAILED' | 'AUCTION';
-type ContractStatus = 'DRAFT' | 'PENDING_SIGNATURE' | 'SIGNED' | 'EXECUTED';
+type AIStrategy = 'ANCHORING' | 'RECIPROCITY' | 'SCARCITY' | 'SOCIAL_PROOF' | 'AUTHORITY' | 'COMPROMISE';
+
+interface Offer {
+  id: string;
+  timestamp: string;
+  from: 'US' | 'THEM';
+  message: string; // Mensaje conversacional humano
+  amount?: number; // Opcional - solo si incluye cifras
+  terms?: string; // Opcional
+  sentiment: number;
+}
 
 interface Negotiation {
   id: string;
   counterparty: string;
-  type: NegotiationType;
+  type: 'BUY' | 'SELL';
   product: string;
-  currentOffer: number;
-  targetPrice: number;
-  limitPrice: number;
-  status: NegotiationStatus;
-  progress: number;
-  aggressiveness: number;
-  startDate: Date;
-  deadline?: Date;
-  offers: Offer[];
-  sentiment: number;
-  strategy: string;
-  zopaDetected: boolean;
-}
-
-interface Offer {
-  id: string;
-  timestamp: Date;
-  from: 'user' | 'counterparty';
   amount: number;
-  conditions: string[];
-  sentiment?: number;
-  accepted: boolean;
+  progress: number;
+  status: NegotiationStatus;
+  sentiment: number; // 0-1
+  zopaDetected: boolean;
+  zopaRange?: { min: number; max: number };
+  batna?: number; // Best Alternative To Negotiated Agreement
+  reservationPrice?: number;
+  targetPrice?: number;
+  offers?: Offer[];
+  activeStrategies?: AIStrategy[];
 }
 
-interface SmartContract {
-  id: string;
-  negotiationId: string;
-  terms: ContractTerm[];
-  escrowAmount: number;
-  status: ContractStatus;
-  hash?: string;
-  signedBy: string[];
-}
-
-interface ContractTerm {
-  id: string;
-  label: string;
-  value: string;
-  mandatory: boolean;
-  accepted: boolean;
-}
-
-interface NegotiationForm {
-  product: string;
-  counterparty: string;
-  type: NegotiationType;
-  targetPrice: number;
-  limitPrice: number;
-  deadline: string;
-  aggressiveness: number;
-}
-
-// --- Sample Data ---
 const SAMPLE_NEGOTIATIONS: Negotiation[] = [
   {
-    id: 'NEG-001',
+    id: '1',
     counterparty: 'Acme Corp Supply',
     type: 'BUY',
-    product: 'Materia Prima Q4',
-    currentOffer: 12450,
-    targetPrice: 11000,
-    limitPrice: 13500,
+    product: 'Raw Materials',
+    amount: 12450,
+    progress: 88,
     status: 'ACTIVE',
-    progress: 68,
-    aggressiveness: 65,
-    startDate: new Date(Date.now() - 3600000 * 12),
-    deadline: new Date(Date.now() + 3600000 * 24),
-    offers: [],
-    sentiment: 0.6,
-    strategy: 'Anchoring Bias',
-    zopaDetected: true
+    sentiment: 0.7,
+    zopaDetected: true,
+    zopaRange: { min: 11000, max: 13500 },
+    batna: 13800,
+    reservationPrice: 13500,
+    targetPrice: 11000,
+    activeStrategies: ['ANCHORING', 'RECIPROCITY'],
+    offers: [
+      { id: 'o1', timestamp: '2025-12-13T09:45:00', from: 'THEM', message: 'Buenos días! Vi que solicitaron una cotización para raw materials. ¿En qué puedo ayudarles hoy?', sentiment: 0.6 },
+      { id: 'o2', timestamp: '2025-12-13T09:50:00', from: 'US', message: 'Sí, exacto. Necesitamos materias primas para nuestro próximo lote de producción. ¿Qué disponibilidad tienen?', sentiment: 0.5 },
+      { id: 'o3', timestamp: '2025-12-13T10:00:00', from: 'THEM', message: 'Tenemos stock disponible inmediato. Para el volumen que mencionaron, podemos ofrecer entrega en 48 horas.', sentiment: 0.7 },
+      { id: 'o4', timestamp: '2025-12-13T10:05:00', from: 'US', message: 'Perfecto, eso nos funciona. Podríamos cerrar en $11,000 con envío gratuito y pago a 10 días. ¿Qué opina?', amount: 11000, terms: 'Net10 + Free Shipping', sentiment: 0.5 },
+      { id: 'o5', timestamp: '2025-12-13T10:15:00', from: 'THEM', message: 'El precio mínimo que podemos ofrecer es $13,200 con pago a 30 días. Es nuestro mejor precio considerando la calidad del material premium.', amount: 13200, terms: 'Net30', sentiment: 0.3 },
+      { id: 'o6', timestamp: '2025-12-13T10:30:00', from: 'US', message: 'Entiendo su posición, pero ese precio está por encima de nuestro presupuesto. ¿Podrían considerar $11,750 con pago a 15 días y envío gratis? Llevamos 3 años comprando con ustedes.', amount: 11750, terms: 'Net15 + Free Shipping', sentiment: 0.6 },
+      { id: 'o7', timestamp: '2025-12-13T10:45:00', from: 'THEM', message: 'Apreciamos mucho su lealtad. Déjeme consultar con mi supervisor...', sentiment: 0.7 },
+      { id: 'o8', timestamp: '2025-12-13T10:50:00', from: 'THEM', message: 'Hemos revisado los números y podemos bajar a $12,450 con pago a 20 días. Es lo máximo que podemos hacer sin comprometer la calidad. ¿Le parece bien?', amount: 12450, terms: 'Net20', sentiment: 0.7 },
+    ]
   },
   {
-    id: 'NEG-002',
+    id: '2',
     counterparty: 'Globex Logistics',
     type: 'BUY',
-    product: 'Servicio de Logística',
-    currentOffer: 45000,
-    targetPrice: 42000,
-    limitPrice: 48000,
+    product: 'Shipping Q1',
+    amount: 45000,
+    progress: 64,
     status: 'AUCTION',
-    progress: 45,
-    aggressiveness: 80,
-    startDate: new Date(Date.now() - 3600000 * 6),
-    deadline: new Date(Date.now() + 3600000 * 4),
-    offers: [],
     sentiment: 0.4,
-    strategy: 'Reverse Auction',
-    zopaDetected: false
+    zopaDetected: false,
+    batna: 52000,
+    reservationPrice: 50000,
+    targetPrice: 42000,
+    activeStrategies: ['SCARCITY', 'AUTHORITY'],
+    offers: [
+      { id: 'o1', timestamp: '2025-12-13T08:30:00', from: 'US', message: 'Hola, ¿cómo están? Queremos cotizar el servicio de envíos para todo el Q1.', sentiment: 0.5 },
+      { id: 'o2', timestamp: '2025-12-13T08:45:00', from: 'THEM', message: '¡Hola! Claro que sí. ¿Qué volumen estimado están manejando?', sentiment: 0.6 },
+      { id: 'o3', timestamp: '2025-12-13T09:00:00', from: 'US', message: 'Calculamos alrededor de 500 envíos mensuales. Tenemos presupuesto de $42,000 para tarifa de volumen. ¿Pueden hacerlo?', amount: 42000, terms: 'Bulk Rate', sentiment: 0.3 },
+      { id: 'o4', timestamp: '2025-12-13T09:30:00', from: 'THEM', message: 'Revisando su solicitud... Con el volumen que manejan, podríamos ofrecer $48,000 bajo tarifa estándar. Los costos de combustible han subido bastante este trimestre.', amount: 48000, terms: 'Standard', sentiment: 0.4 },
+      { id: 'o5', timestamp: '2025-12-13T09:35:00', from: 'US', message: 'Es mucho más de lo que esperábamos. ¿No hay forma de ajustar ese precio?', sentiment: 0.3 },
+    ]
   },
   {
-    id: 'NEG-003',
-    counterparty: 'Sovereign Systems',
-    type: 'SELL',
-    product: 'Licencia Software Enterprise',
-    currentOffer: 120000,
-    targetPrice: 125000,
-    limitPrice: 115000,
-    status: 'CLOSED',
-    progress: 100,
-    aggressiveness: 50,
-    startDate: new Date(Date.now() - 3600000 * 48),
-    offers: [],
-    sentiment: 0.9,
-    strategy: 'Value-Based',
-    zopaDetected: true
-  },
-  {
-    id: 'NEG-004',
+    id: '3',
     counterparty: 'Massive Dynamic',
     type: 'BUY',
-    product: 'Hardware Infrastructure',
-    currentOffer: 8900,
-    targetPrice: 8000,
-    limitPrice: 9500,
-    status: 'PAUSED',
-    progress: 30,
-    aggressiveness: 40,
-    startDate: new Date(Date.now() - 3600000 * 24),
-    offers: [],
+    product: 'R&D Consultation',
+    amount: 8900,
+    progress: 45,
+    status: 'ACTIVE',
     sentiment: 0.5,
-    strategy: 'Gradual Concession',
-    zopaDetected: false
-  }
+    zopaDetected: false,
+    batna: 12000,
+    reservationPrice: 11000,
+    targetPrice: 8000,
+    activeStrategies: ['SOCIAL_PROOF'],
+    offers: [
+      { id: 'o1', timestamp: '2025-12-13T07:45:00', from: 'US', message: 'Buenos días. Nos interesa contratar servicios de consultoría en R&D.', sentiment: 0.5 },
+      { id: 'o2', timestamp: '2025-12-13T07:55:00', from: 'THEM', message: 'Excelente! Cuénteme más sobre su proyecto. ¿Qué tipo de consultoría necesitan exactamente?', sentiment: 0.6 },
+      { id: 'o3', timestamp: '2025-12-13T08:00:00', from: 'US', message: 'Necesitamos ayuda con el desarrollo de un nuevo producto por 3 meses. Nuestro presupuesto inicial es de $8,000. ¿Qué nos pueden ofrecer?', amount: 8000, terms: '3-month contract', sentiment: 0.4 },
+      { id: 'o4', timestamp: '2025-12-13T08:20:00', from: 'THEM', message: 'Interesante proyecto. Déjeme revisar con nuestro equipo técnico...', sentiment: 0.5 },
+      { id: 'o5', timestamp: '2025-12-13T08:45:00', from: 'THEM', message: 'Para un proyecto con el alcance que mencionan, necesitaríamos $10,500 y preferiblemente extenderlo a 6 meses para lograr mejores resultados.', amount: 10500, terms: '6-month contract', sentiment: 0.5 },
+    ]
+  },
+  {
+    id: '4',
+    counterparty: 'Sovereign Systems',
+    type: 'SELL',
+    product: 'Software License',
+    amount: 120000,
+    progress: 100,
+    status: 'CLOSED',
+    sentiment: 0.9,
+    zopaDetected: true,
+    zopaRange: { min: 115000, max: 135000 },
+    batna: 100000,
+    reservationPrice: 110000,
+    targetPrice: 130000,
+    activeStrategies: ['AUTHORITY', 'SCARCITY'],
+    offers: [
+      { id: 'o1', timestamp: '2025-12-12T13:30:00', from: 'THEM', message: 'Hola! Vimos su software en la conferencia de tecnología el mes pasado. Nos impresionó mucho.', sentiment: 0.7 },
+      { id: 'o2', timestamp: '2025-12-12T13:45:00', from: 'US', message: '¡Gracias! Nos alegra mucho que les haya interesado. ¿En qué podemos ayudarles?', sentiment: 0.7 },
+      { id: 'o3', timestamp: '2025-12-12T14:00:00', from: 'THEM', message: 'Queremos implementarlo en nuestra empresa. ¿Qué opciones de licenciamiento tienen disponibles?', sentiment: 0.6 },
+      { id: 'o4', timestamp: '2025-12-12T14:10:00', from: 'US', message: 'Tenemos la licencia anual disponible por $130,000. Incluye todas las funcionalidades premium y actualizaciones automáticas durante todo el año.', amount: 130000, terms: 'Annual license', sentiment: 0.6 },
+      { id: 'o5', timestamp: '2025-12-12T14:45:00', from: 'THEM', message: 'Es un poco más de lo que teníamos presupuestado...', sentiment: 0.4 },
+      { id: 'o6', timestamp: '2025-12-12T15:00:00', from: 'THEM', message: '¿Podrían considerar $115,000 si incluimos soporte técnico anual en el paquete? Queremos establecer una relación a largo plazo.', amount: 115000, terms: 'Annual + Support', sentiment: 0.7 },
+      { id: 'o7', timestamp: '2025-12-12T15:30:00', from: 'US', message: 'Me gusta esa visión de largo plazo. Déjeme ver qué podemos hacer...', sentiment: 0.8 },
+      { id: 'o8', timestamp: '2025-12-12T16:00:00', from: 'US', message: 'Perfecto! Podemos cerrar en $120,000 incluyendo la licencia anual + soporte premium con respuesta garantizada en 24h. ¿Trato hecho?', amount: 120000, terms: 'Annual + Premium Support', sentiment: 0.9 },
+      { id: 'o9', timestamp: '2025-12-12T16:05:00', from: 'THEM', message: '¡Excelente! Trato hecho. Procederé con el papeleo. 🤝', sentiment: 0.95 },
+    ]
+  },
 ];
 
-const NegotiationHub: React.FC = () => {
-  // --- State Management ---
-  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
-  const [negotiations, setNegotiations] = useState<Negotiation[]>(SAMPLE_NEGOTIATIONS);
-  const [selectedNegotiationId, setSelectedNegotiationId] = useState<string | null>(null);
-  const [protocolLogs, setProtocolLogs] = useState<string[]>([]);
+const STRATEGY_INFO: Record<AIStrategy, { name: string; description: string; icon: string }> = {
+  ANCHORING: { name: 'Anclaje', description: 'Establece un punto de referencia inicial alto/bajo', icon: '⚓' },
+  RECIPROCITY: { name: 'Reciprocidad', description: 'Pequeñas concesiones generan reciprocidad', icon: '🔄' },
+  SCARCITY: { name: 'Escasez', description: 'Enfatiza urgencia y disponibilidad limitada', icon: '⏰' },
+  SOCIAL_PROOF: { name: 'Prueba Social', description: 'Demuestra que otros aceptaron términos similares', icon: '👥' },
+  AUTHORITY: { name: 'Autoridad', description: 'Referencia a expertos y estándares del sector', icon: '🎯' },
+  COMPROMISE: { name: 'Compromiso', description: 'Búsqueda activa de punto medio', icon: '🤝' },
+};
 
-  // Create form
-  const [createForm, setCreateForm] = useState<NegotiationForm>({
-    product: '',
-    counterparty: '',
-    type: 'BUY',
-    targetPrice: 0,
-    limitPrice: 0,
-    deadline: '',
-    aggressiveness: 50
-  });
+const NegotiationHub: React.FC = () => {
+  const [viewMode, setViewMode] = useState<'table' | 'detail'>('table');
+  const [selectedNegotiation, setSelectedNegotiation] = useState<Negotiation | null>(null);
+  const [aggressiveness, setAggressiveness] = useState(50);
+  const [showStrategyPanel, setShowStrategyPanel] = useState(false);
+  const [showOffersHistory, setShowOffersHistory] = useState(false);
+  const [showBudgetPopup, setShowBudgetPopup] = useState(false);
+  const [filterType, setFilterType] = useState<'ALL' | 'BUY' | 'SELL'>('ALL');
+  const [filterStatus, setFilterStatus] = useState<'ALL' | NegotiationStatus>('ALL');
+  const [logs, setLogs] = useState<string[]>([
+    "[MNP-OUT]: Offer sent: $11,750 + Net15.",
+    "[MNP-IN]: Counter-party accepts. Sentiment: Positive (0.7).",
+    "[AI-CORE]: ZOPA Detected! Range: $11K-$13.5K",
+    "[AI-CORE]: Activating Strategy: ANCHORING + RECIPROCITY"
+  ]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // --- Computed Values ---
-  const selectedNegotiation = negotiations.find(n => n.id === selectedNegotiationId);
-  const activeNegotiations = negotiations.filter(n => ['ACTIVE', 'AUCTION'].includes(n.status));
-  const totalValue = negotiations.reduce((sum, n) => sum + n.currentOffer, 0);
+  const getSentimentColor = (sentiment: number) => {
+    if (sentiment >= 0.7) return '#45FF9A';
+    if (sentiment >= 0.5) return '#FFA500';
+    if (sentiment >= 0.3) return '#FF9500';
+    return '#FF6B6B';
+  };
 
-  // --- Protocol Log Simulation ---
+  const getSentimentLabel = (sentiment: number) => {
+    if (sentiment >= 0.7) return 'Positivo';
+    if (sentiment >= 0.5) return 'Neutral';
+    if (sentiment >= 0.3) return 'Hesitante';
+    return 'Negativo';
+  };
+
+  const getStatusColor = (status: NegotiationStatus) => {
+    switch (status) {
+      case 'ACTIVE': return 'text-green-400 bg-green-400/10 border-green-400/20';
+      case 'AUCTION': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
+      case 'PAUSED': return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+      case 'CLOSED': return 'text-obsidian-text-muted bg-white/5 border-white/10';
+      case 'FAILED': return 'text-red-400 bg-red-400/10 border-red-400/20';
+      default: return 'text-white bg-white/10 border-white/20';
+    }
+  };
+
+  const handleViewDetail = (negotiation: Negotiation) => {
+    setSelectedNegotiation(negotiation);
+    setViewMode('detail');
+  };
+
+  const handleBackToTable = () => {
+    setViewMode('table');
+    setSelectedNegotiation(null);
+  };
+
+  // Filtrar negociaciones
+  const filteredNegotiations = SAMPLE_NEGOTIATIONS.filter(neg => {
+    if (filterType !== 'ALL' && neg.type !== filterType) return false;
+    if (filterStatus !== 'ALL' && neg.status !== filterStatus) return false;
+    return true;
+  });
+
+  // --- Animation Loop for Nash Graph ---
   useEffect(() => {
-    if (!selectedNegotiation) return;
-
-    setProtocolLogs([
-      `[MNP-OUT] > Offer sent: $${(selectedNegotiation.currentOffer * 0.9).toLocaleString()} + Net30.`,
-      `[MNP-IN]  < Counter-party rejects. Sentiment: ${selectedNegotiation.sentiment.toFixed(1)}.`,
-      `[AI-CORE] ! Calculating Nash Equilibrium...`
-    ]);
-
-    const interval = setInterval(() => {
-      const actions = [
-        `[AI-CORE] ! Adjusting Strategy. Triggering "${selectedNegotiation.strategy}".`,
-        `[MNP-OUT] > New Offer: $${(selectedNegotiation.currentOffer * 0.95).toLocaleString()}.`,
-        `[MNP-IN]  < Counter-party counter-offers: $${(selectedNegotiation.currentOffer * 0.98).toLocaleString()}.`,
-        `[AI-CORE] ${selectedNegotiation.zopaDetected ? 'ZOPA Detected. Converging...' : 'Searching for ZOPA...'}`,
-        `[MNP-OUT] > Finalizing terms. Generating Smart Contract hash.`
-      ];
-      const randomAction = actions[Math.floor(Math.random() * actions.length)];
-      setProtocolLogs(prev => [...prev.slice(-6), randomAction]);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [selectedNegotiation]);
-
-  // --- Nash Equilibrium Canvas ---
-  useEffect(() => {
-    if (viewMode !== 'detail' || !selectedNegotiation) return;
-
+    if (viewMode !== 'detail') return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -218,825 +232,976 @@ const NegotiationHub: React.FC = () => {
 
     const render = () => {
       time += 0.02;
-      const width = canvas.width / 2;
-      const height = canvas.height / 2;
-
+      const { width, height } = canvas.getBoundingClientRect();
       ctx.clearRect(0, 0, width, height);
 
       // Grid
-      ctx.strokeStyle = '#1A1A1D';
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
       ctx.lineWidth = 1;
-      for(let i=0; i<width; i+=40) {
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, height);
-        ctx.stroke();
-      }
-      for(let i=0; i<height; i+=40) {
-        ctx.beginPath();
-        ctx.moveTo(0, i);
-        ctx.lineTo(width, i);
-        ctx.stroke();
-      }
+      for (let x = 0; x < width; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); }
+      for (let y = 0; y < height; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); }
 
       // Axes
       ctx.strokeStyle = '#BEBEC6';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(40, height-40);
-      ctx.lineTo(width-40, height-40);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(40, height-40);
-      ctx.lineTo(40, 40);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(40, height - 40); ctx.lineTo(width - 40, height - 40); ctx.stroke(); // X
+      ctx.beginPath(); ctx.moveTo(40, height - 40); ctx.lineTo(40, 40); ctx.stroke(); // Y
 
-      // Labels
-      ctx.fillStyle = '#8C8C97';
-      ctx.font = '10px Inter';
-      ctx.fillText('PRICE UTILITY', width-90, height-25);
-      ctx.save();
-      ctx.translate(25, 100);
-      ctx.rotate(-Math.PI/2);
-      ctx.fillText('CONDITIONS', 0, 0);
-      ctx.restore();
-
-      // Own Curve
-      const aggFactor = selectedNegotiation.aggressiveness / 100;
+      // Buyer Utility Curve (Green, Descending)
       ctx.beginPath();
-      ctx.moveTo(40, 40);
-      ctx.bezierCurveTo(width * 0.5, 40, width * (0.5 + aggFactor * 0.2), height * 0.5, width - 40, height - 40);
+      ctx.moveTo(40, 60);
+      ctx.bezierCurveTo(width * 0.4, 60, width * 0.6, height - 60, width - 40, height - 40);
       ctx.strokeStyle = '#45FF9A';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Opponent Curve
-      const oppShift = Math.sin(time) * 20;
+      // Seller Utility Curve (White, Ascending) - Animated
+      const shift = Math.sin(time) * 10;
       ctx.beginPath();
       ctx.moveTo(40, height - 40);
-      ctx.bezierCurveTo(width * 0.3, height - 40, width * 0.6, height * 0.6 + oppShift, width - 40, 40);
-      ctx.strokeStyle = '#BEBEC6';
+      ctx.bezierCurveTo(width * 0.3, height - 40, width * 0.7, 60 + shift, width - 40, 40);
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
       ctx.setLineDash([5, 5]);
-      ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // ZOPA
-      if (selectedNegotiation.zopaDetected) {
-        ctx.globalCompositeOperation = 'screen';
-        ctx.fillStyle = 'rgba(69, 255, 154, 0.05)';
-        ctx.beginPath();
-        ctx.arc(width/2, height/2, 60 + Math.sin(time*2)*5, 0, Math.PI*2);
-        ctx.fill();
-        ctx.globalCompositeOperation = 'source-over';
-      }
-
-      // Deal Point
-      const dealX = (width / 2) + Math.cos(time * 0.5) * 20;
-      const dealY = (height / 2) + Math.sin(time * 0.8) * 20;
-
+      // Nash Equilibrium Point (Intersection)
+      const eqX = width / 2 + Math.sin(time * 0.5) * 5;
+      const eqY = height / 2 + Math.cos(time * 0.5) * 5;
+      
+      // Pulse
       ctx.beginPath();
-      ctx.arc(dealX, dealY, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
+      ctx.arc(eqX, eqY, 15 + Math.sin(time * 3) * 5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(69, 255, 154, 0.1)';
       ctx.fill();
 
       ctx.beginPath();
-      ctx.arc(dealX, dealY, 12, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-      ctx.stroke();
+      ctx.arc(eqX, eqY, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-      ctx.beginPath();
-      ctx.moveTo(dealX, dealY);
-      ctx.lineTo(dealX, height-40);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(dealX, dealY);
-      ctx.lineTo(40, dealY);
-      ctx.stroke();
+      // Axis Labels
+      ctx.fillStyle = '#8C8C97';
+      ctx.font = '10px Inter';
+      ctx.fillText('PRICE UTILITY', width - 80, height - 25);
+      ctx.save();
+      ctx.translate(25, 100);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('CONFLICT', 0, 0);
+      ctx.restore();
 
       animationId = requestAnimationFrame(render);
     };
-
     render();
+
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       cancelAnimationFrame(animationId);
     };
   }, [viewMode, selectedNegotiation]);
 
-  // --- Handlers ---
-  const handleCreateNegotiation = () => {
-    if (!createForm.product || !createForm.counterparty || !createForm.targetPrice) {
-      alert('Por favor completa todos los campos requeridos');
-      return;
-    }
-
-    const newNegotiation: Negotiation = {
-      id: `NEG-${String(negotiations.length + 1).padStart(3, '0')}`,
-      counterparty: createForm.counterparty,
-      type: createForm.type,
-      product: createForm.product,
-      currentOffer: createForm.type === 'BUY' ? createForm.limitPrice : createForm.targetPrice,
-      targetPrice: createForm.targetPrice,
-      limitPrice: createForm.limitPrice,
-      status: 'ACTIVE',
-      progress: 0,
-      aggressiveness: createForm.aggressiveness,
-      startDate: new Date(),
-      deadline: createForm.deadline ? new Date(createForm.deadline) : undefined,
-      offers: [],
-      sentiment: 0.5,
-      strategy: 'Initial Positioning',
-      zopaDetected: false
-    };
-
-    setNegotiations([...negotiations, newNegotiation]);
-    setCreateForm({
-      product: '',
-      counterparty: '',
-      type: 'BUY',
-      targetPrice: 0,
-      limitPrice: 0,
-      deadline: '',
-      aggressiveness: 50
-    });
-    setViewMode('dashboard');
-  };
-
-  const handleNegotiationAction = (negotiationId: string, action: 'pause' | 'resume' | 'cancel') => {
-    setNegotiations(prev => prev.map(n => {
-      if (n.id === negotiationId) {
-        switch (action) {
-          case 'pause':
-            return { ...n, status: 'PAUSED' as NegotiationStatus };
-          case 'resume':
-            return { ...n, status: 'ACTIVE' as NegotiationStatus };
-          case 'cancel':
-            return { ...n, status: 'FAILED' as NegotiationStatus };
-          default:
-            return n;
-        }
-      }
-      return n;
-    }));
-  };
-
-  const handleViewDetail = (negotiationId: string) => {
-    setSelectedNegotiationId(negotiationId);
-    setViewMode('detail');
-  };
-
-  const getStatusColor = (status: NegotiationStatus) => {
-    switch (status) {
-      case 'ACTIVE': return 'text-[#6A4FFB] border-[#6A4FFB]/30 bg-[#6A4FFB]/10';
-      case 'AUCTION': return 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10';
-      case 'PAUSED': return 'text-gray-400 border-gray-400/30 bg-gray-400/10';
-      case 'CLOSED': return 'text-[#45FF9A] border-[#45FF9A]/30 bg-[#45FF9A]/10';
-      case 'FAILED': return 'text-red-400 border-red-400/30 bg-red-400/10';
-      default: return 'text-gray-400 border-gray-400/30 bg-gray-400/10';
-    }
-  };
-
-  const getStatusIcon = (status: NegotiationStatus) => {
-    switch (status) {
-      case 'ACTIVE': return <Activity size={12} className="animate-pulse" />;
-      case 'AUCTION': return <AlertTriangle size={12} className="animate-pulse" />;
-      case 'PAUSED': return <Pause size={12} />;
-      case 'CLOSED': return <CheckCircle size={12} />;
-      case 'FAILED': return <XCircle size={12} />;
-      default: return <Clock size={12} />;
-    }
-  };
-
-  // --- Render Functions ---
-  const renderDashboard = () => (
-    <div className="w-full h-screen bg-[#0B0B0D] text-obsidian-text-primary px-6 py-6 flex flex-col overflow-hidden">
-      <div className="mb-6">
-        <div className="flex justify-between items-center">
+  // Vista de Tabla
+  if (viewMode === 'table') {
+    return (
+      <div className="w-full min-h-screen bg-[#0B0B0D] text-obsidian-text-primary px-6 py-6 flex flex-col gap-6 overflow-y-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center border-b border-white/5 pb-4">
           <div>
-            <h1 className="text-2xl font-light text-[#F5F5F7] tracking-wide mb-1">Negotiation Hub</h1>
-            <p className="text-sm text-obsidian-text-muted">Centro de negociación automática B2B</p>
+            <h1 className="text-xl font-light text-white tracking-widest flex items-center gap-2">
+              <ArrowRightLeft className="text-obsidian-accent" size={20} />
+              NEGOTIATION HUB <span className="text-obsidian-text-muted text-sm font-normal">PROTOCOL MNP</span>
+            </h1>
+            <p className="text-xs text-obsidian-text-muted mt-1">Gestión centralizada de negociaciones automáticas</p>
           </div>
-          <div className="flex gap-4 items-center">
-            <div className="text-right">
-              <div className="text-sm text-obsidian-text-muted">Negociaciones Activas</div>
-              <div className="text-2xl font-thin text-white">{activeNegotiations.length}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-obsidian-text-muted">Valor Total</div>
-              <div className="text-2xl font-thin text-white">${(totalValue / 1000).toFixed(0)}K</div>
-            </div>
-            <ObsidianButton
-              onClick={() => setViewMode('create')}
-              icon={<Plus size={16} />}
-            >
-              Nueva Negociación
-            </ObsidianButton>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-green-400 bg-green-400/10 px-2 py-1 rounded border border-green-400/20 flex items-center gap-1">
+              <Activity size={10} /> ACTIVE NODES: {SAMPLE_NEGOTIATIONS.filter(n => n.status === 'ACTIVE').length}
+            </span>
           </div>
         </div>
-      </div>
 
-      {/* Negotiations Table */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-1 gap-4">
-          {negotiations.map(negotiation => (
-            <ObsidianCard key={negotiation.id} className="hover:bg-white/[0.02] transition-all group">
-              <div className="flex gap-6">
-                {/* Left: Info */}
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-lg font-normal text-[#F5F5F7]">{negotiation.product}</h3>
-                        <span className="text-[10px] text-obsidian-text-muted font-mono opacity-60">[{negotiation.id}]</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-obsidian-text-muted">
-                        <Users size={12} />
-                        <span>{negotiation.counterparty}</span>
-                      </div>
-                    </div>
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-medium tracking-widest uppercase flex items-center gap-2 border ${getStatusColor(negotiation.status)}`}>
-                      {getStatusIcon(negotiation.status)}
-                      {negotiation.status}
-                    </div>
-                  </div>
+        {/* Filters */}
+        <div className="flex gap-3">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilterType('ALL')}
+              className={`px-4 py-2 rounded text-xs transition-all ${filterType === 'ALL' ? 'bg-obsidian-accent text-white' : 'bg-white/5 text-obsidian-text-muted hover:bg-white/10'}`}
+            >
+              Todas
+            </button>
+            <button
+              onClick={() => setFilterType('BUY')}
+              className={`px-4 py-2 rounded text-xs transition-all ${filterType === 'BUY' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-white/5 text-obsidian-text-muted hover:bg-white/10'}`}
+            >
+              Compras
+            </button>
+            <button
+              onClick={() => setFilterType('SELL')}
+              className={`px-4 py-2 rounded text-xs transition-all ${filterType === 'SELL' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-white/5 text-obsidian-text-muted hover:bg-white/10'}`}
+            >
+              Ventas
+            </button>
+          </div>
 
-                  {/* Progress Bar */}
-                  <div className="mb-3">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-obsidian-text-muted">Progreso</span>
-                      <span className="text-white">{negotiation.progress}%</span>
-                    </div>
-                    <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#6A4FFB] shadow-[0_0_10px_#6A4FFB] transition-all duration-300"
-                        style={{ width: `${negotiation.progress}%` }}
-                      />
-                    </div>
-                  </div>
+          <div className="flex gap-2 ml-auto">
+            {['ALL', 'ACTIVE', 'AUCTION', 'CLOSED'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status as any)}
+                className={`px-3 py-2 rounded text-xs transition-all ${filterStatus === status ? 'bg-white/10 text-white' : 'bg-white/5 text-obsidian-text-muted hover:bg-white/10'}`}
+              >
+                {status === 'ALL' ? 'Todos' : status}
+              </button>
+            ))}
+          </div>
+        </div>
 
-                  {/* KPIs */}
-                  <div className="grid grid-cols-5 gap-4">
-                    <div>
-                      <div className="text-[10px] text-obsidian-text-muted uppercase mb-1">Tipo</div>
-                      <div className="flex items-center gap-2 text-sm text-white">
-                        {negotiation.type === 'BUY' ? <TrendingDown size={14} /> : <TrendingUp size={14} />}
-                        <span>{negotiation.type}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-obsidian-text-muted uppercase mb-1">Oferta Actual</div>
-                      <div className="text-sm text-white">${(negotiation.currentOffer / 1000).toFixed(1)}K</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-obsidian-text-muted uppercase mb-1">Objetivo</div>
-                      <div className="text-sm text-white">${(negotiation.targetPrice / 1000).toFixed(1)}K</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-obsidian-text-muted uppercase mb-1">Sentimiento</div>
-                      <div className="text-sm text-white">{(negotiation.sentiment * 100).toFixed(0)}%</div>
-                    </div>
-                    <div>
-                      <div className="text-[10px] text-obsidian-text-muted uppercase mb-1">Estrategia</div>
-                      <div className="text-sm text-white truncate">{negotiation.strategy}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right: Actions */}
-                <div className="flex flex-col justify-between items-end">
-                  <button
-                    onClick={() => handleViewDetail(negotiation.id)}
-                    className="p-2 rounded-lg border border-white/[0.1] hover:bg-white/[0.05] transition-all opacity-0 group-hover:opacity-100"
+        {/* Table */}
+        <ObsidianCard className="flex-1 overflow-hidden flex flex-col" noPadding>
+          <div className="overflow-auto flex-1">
+            <table className="w-full">
+              <thead className="sticky top-0 bg-[#0F0F12] z-10 border-b border-white/10">
+                <tr>
+                  <th className="text-left p-4 text-[10px] text-obsidian-text-muted uppercase tracking-wider font-medium">ID</th>
+                  <th className="text-left p-4 text-[10px] text-obsidian-text-muted uppercase tracking-wider font-medium">Contraparte</th>
+                  <th className="text-left p-4 text-[10px] text-obsidian-text-muted uppercase tracking-wider font-medium">Tipo</th>
+                  <th className="text-left p-4 text-[10px] text-obsidian-text-muted uppercase tracking-wider font-medium">Producto</th>
+                  <th className="text-right p-4 text-[10px] text-obsidian-text-muted uppercase tracking-wider font-medium">Monto</th>
+                  <th className="text-center p-4 text-[10px] text-obsidian-text-muted uppercase tracking-wider font-medium">Progreso</th>
+                  <th className="text-center p-4 text-[10px] text-obsidian-text-muted uppercase tracking-wider font-medium">Estado</th>
+                  <th className="text-center p-4 text-[10px] text-obsidian-text-muted uppercase tracking-wider font-medium">Sentimiento</th>
+                  <th className="text-center p-4 text-[10px] text-obsidian-text-muted uppercase tracking-wider font-medium">ZOPA</th>
+                  <th className="text-center p-4 text-[10px] text-obsidian-text-muted uppercase tracking-wider font-medium">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredNegotiations.map((neg, index) => (
+                  <tr
+                    key={neg.id}
+                    className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group"
                   >
-                    <Eye size={16} className="text-white" />
-                  </button>
-
-                  <div className="flex gap-2">
-                    {negotiation.status === 'ACTIVE' && (
+                    <td className="p-4">
+                      <span className="text-xs font-mono text-obsidian-text-muted">#{neg.id}</span>
+                    </td>
+                    <td className="p-4">
+                      <div>
+                        <div className="text-sm text-white font-medium">{neg.counterparty}</div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className={`text-xs px-2 py-1 rounded border ${neg.type === 'BUY' ? 'text-blue-400 bg-blue-400/10 border-blue-400/20' : 'text-green-400 bg-green-400/10 border-green-400/20'}`}>
+                        {neg.type}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className="text-sm text-obsidian-text-primary">{neg.product}</span>
+                    </td>
+                    <td className="p-4 text-right">
+                      <span className="text-sm text-white font-mono">${neg.amount.toLocaleString()}</span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${neg.status === 'AUCTION' ? 'bg-yellow-400' : neg.status === 'CLOSED' ? 'bg-green-400' : 'bg-obsidian-accent'}`}
+                            style={{ width: `${neg.progress}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-obsidian-text-muted font-mono w-10 text-right">{neg.progress}%</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className={`text-xs px-2 py-1 rounded border ${getStatusColor(neg.status)}`}>
+                        {neg.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-12 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full transition-all"
+                            style={{
+                              width: `${neg.sentiment * 100}%`,
+                              backgroundColor: getSentimentColor(neg.sentiment)
+                            }}
+                          />
+                        </div>
+                        <span className="text-xs font-mono" style={{ color: getSentimentColor(neg.sentiment) }}>
+                          {(neg.sentiment * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-center">
+                      {neg.zopaDetected ? (
+                        <CheckCircle size={16} className="text-green-400 mx-auto" />
+                      ) : (
+                        <XCircle size={16} className="text-obsidian-text-muted mx-auto" />
+                      )}
+                    </td>
+                    <td className="p-4 text-center">
                       <button
-                        onClick={() => handleNegotiationAction(negotiation.id, 'pause')}
-                        className="p-2 rounded-lg border border-white/[0.1] hover:bg-white/[0.05] transition-all"
-                        title="Pausar"
+                        onClick={() => handleViewDetail(neg)}
+                        className="px-3 py-1.5 bg-obsidian-accent/20 text-obsidian-accent hover:bg-obsidian-accent hover:text-white rounded text-xs transition-all opacity-0 group-hover:opacity-100"
                       >
-                        <Pause size={14} className="text-yellow-400" />
+                        Ver Detalle
                       </button>
-                    )}
-                    {negotiation.status === 'PAUSED' && (
-                      <button
-                        onClick={() => handleNegotiationAction(negotiation.id, 'resume')}
-                        className="p-2 rounded-lg border border-white/[0.1] hover:bg-white/[0.05] transition-all"
-                        title="Reanudar"
-                      >
-                        <PlayCircle size={14} className="text-[#45FF9A]" />
-                      </button>
-                    )}
-                    {['ACTIVE', 'PAUSED'].includes(negotiation.status) && (
-                      <button
-                        onClick={() => handleNegotiationAction(negotiation.id, 'cancel')}
-                        className="p-2 rounded-lg border border-white/[0.1] hover:bg-red-500/[0.1] transition-all"
-                        title="Cancelar"
-                      >
-                        <StopCircle size={14} className="text-red-400" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </ObsidianCard>
-          ))}
-        </div>
-
-        {negotiations.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-obsidian-text-muted">
-            <ArrowRightLeft size={64} className="mb-4 opacity-20" />
-            <p className="text-sm mb-4">No hay negociaciones activas</p>
-            <ObsidianButton
-              onClick={() => setViewMode('create')}
-              icon={<Plus size={16} />}
-            >
-              Crear Primera Negociación
-            </ObsidianButton>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
-    </div>
-  );
 
-  const renderCreate = () => (
-    <div className="w-full h-screen bg-[#0B0B0D] text-obsidian-text-primary px-6 py-6 flex flex-col overflow-hidden">
-      <div className="mb-6 flex items-center gap-4">
-        <button
-          onClick={() => setViewMode('dashboard')}
-          className="p-2 rounded-lg border border-white/[0.1] hover:bg-white/[0.05] transition-all"
-        >
-          <ArrowLeft size={20} className="text-white" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-light text-[#F5F5F7] tracking-wide">Iniciar Nueva Negociación</h1>
-          <p className="text-sm text-obsidian-text-muted">Configura los parámetros para la negociación autónoma</p>
+          {/* Stats Footer */}
+          <div className="border-t border-white/10 p-4 grid grid-cols-4 gap-4 bg-[#0F0F12]">
+            <div className="text-center">
+              <p className="text-[10px] text-obsidian-text-muted uppercase tracking-wider mb-1">Total Negociaciones</p>
+              <p className="text-xl text-white font-light">{SAMPLE_NEGOTIATIONS.length}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] text-obsidian-text-muted uppercase tracking-wider mb-1">Activas</p>
+              <p className="text-xl text-green-400 font-light">{SAMPLE_NEGOTIATIONS.filter(n => n.status === 'ACTIVE').length}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] text-obsidian-text-muted uppercase tracking-wider mb-1">Cerradas</p>
+              <p className="text-xl text-obsidian-text-muted font-light">{SAMPLE_NEGOTIATIONS.filter(n => n.status === 'CLOSED').length}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] text-obsidian-text-muted uppercase tracking-wider mb-1">Volumen Total</p>
+              <p className="text-xl text-white font-light">${SAMPLE_NEGOTIATIONS.reduce((sum, n) => sum + n.amount, 0).toLocaleString()}</p>
+            </div>
+          </div>
+        </ObsidianCard>
+      </div>
+    );
+  }
+
+  // Vista de Detalle
+  return (
+    <div className="w-full min-h-screen bg-[#0B0B0D] text-obsidian-text-primary px-6 py-6 flex flex-col gap-6 overflow-y-auto relative">
+      {/* Header */}
+      <div className="flex justify-between items-center border-b border-white/5 pb-4">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleBackToTable}
+            className="p-2 hover:bg-white/5 rounded transition-colors"
+          >
+            <ArrowLeft className="text-obsidian-text-muted hover:text-white" size={20} />
+          </button>
+          <div>
+            <h1 className="text-xl font-light text-white tracking-widest flex items-center gap-2">
+              {selectedNegotiation?.counterparty}
+              <span className={`text-xs px-2 py-1 rounded border ${selectedNegotiation ? getStatusColor(selectedNegotiation.status) : ''}`}>
+                {selectedNegotiation?.status}
+              </span>
+            </h1>
+            <p className="text-xs text-obsidian-text-muted mt-1">{selectedNegotiation?.product} • Negociación #{selectedNegotiation?.id}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+           <ObsidianButton variant="secondary" className="text-xs" onClick={() => setShowStrategyPanel(!showStrategyPanel)}>
+             <Zap size={14} className="mr-2"/> Estrategias IA
+           </ObsidianButton>
+           <ObsidianButton variant="secondary" className="text-xs" onClick={() => setShowOffersHistory(!showOffersHistory)}>
+             <History size={14} className="mr-2"/> Historial ({selectedNegotiation?.offers?.length || 0})
+           </ObsidianButton>
+           <span className="text-[10px] text-green-400 bg-green-400/10 px-2 py-1 rounded border border-green-400/20 flex items-center gap-1">
+             <Activity size={10} /> LIVE ANALYSIS
+           </span>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto">
-          <ObsidianCard className="mb-6">
-            <h3 className="text-lg font-normal text-[#F5F5F7] mb-4">Información Básica</h3>
+      <div className="grid grid-cols-12 gap-6 pb-6">
+
+        {/* --- LEFT PANEL: RESUMEN --- */}
+        <div className="col-span-3 flex flex-col gap-4">
+          <ObsidianCard>
+            <h2 className="text-xs font-bold text-obsidian-text-muted tracking-[0.2em] mb-4 uppercase border-b border-white/5 pb-2">
+              INFORMACIÓN GENERAL
+            </h2>
+
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs text-obsidian-text-muted uppercase tracking-wider block mb-2">
-                    Producto/Servicio *
-                  </label>
-                  <input
-                    type="text"
-                    value={createForm.product}
-                    onChange={(e) => setCreateForm({ ...createForm, product: e.target.value })}
-                    placeholder="Ej: Materia Prima Q4"
-                    className="w-full bg-white/[0.02] border border-white/[0.1] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-obsidian-accent transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-obsidian-text-muted uppercase tracking-wider block mb-2">
-                    Contraparte *
-                  </label>
-                  <input
-                    type="text"
-                    value={createForm.counterparty}
-                    onChange={(e) => setCreateForm({ ...createForm, counterparty: e.target.value })}
-                    placeholder="Ej: Acme Corp"
-                    className="w-full bg-white/[0.02] border border-white/[0.1] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-obsidian-accent transition-colors"
-                  />
+              <div>
+                <p className="text-[10px] text-obsidian-text-muted uppercase mb-1">Tipo de Operación</p>
+                <span className={`text-xs px-2 py-1 rounded border inline-block ${selectedNegotiation?.type === 'BUY' ? 'text-blue-400 bg-blue-400/10 border-blue-400/20' : 'text-green-400 bg-green-400/10 border-green-400/20'}`}>
+                  {selectedNegotiation?.type === 'BUY' ? 'COMPRA' : 'VENTA'}
+                </span>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-obsidian-text-muted uppercase mb-1">Monto Actual</p>
+                <p className="text-2xl text-white font-light font-mono">${selectedNegotiation?.amount.toLocaleString()}</p>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-obsidian-text-muted uppercase mb-1">Progreso General</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${selectedNegotiation?.status === 'AUCTION' ? 'bg-yellow-400' : selectedNegotiation?.status === 'CLOSED' ? 'bg-green-400' : 'bg-obsidian-accent'}`}
+                      style={{ width: `${selectedNegotiation?.progress}%` }}
+                    />
+                  </div>
+                  <span className="text-sm text-white font-mono">{selectedNegotiation?.progress}%</span>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-obsidian-text-muted uppercase tracking-wider block mb-3">
-                  Tipo de Negociación
-                </label>
-                <div className="flex gap-3">
-                  {[
-                    { id: 'BUY', label: 'Compra', icon: <TrendingDown size={14} /> },
-                    { id: 'SELL', label: 'Venta', icon: <TrendingUp size={14} /> }
-                  ].map(type => (
-                    <button
-                      key={type.id}
-                      onClick={() => setCreateForm({ ...createForm, type: type.id as NegotiationType })}
-                      className={`
-                        flex-1 py-3 px-4 border rounded-lg text-xs uppercase flex items-center justify-center gap-2 transition-all
-                        ${createForm.type === type.id
-                          ? 'border-obsidian-accent bg-obsidian-accent/10 text-obsidian-accent'
-                          : 'border-white/[0.1] text-white hover:bg-white/[0.05]'}
-                      `}
-                    >
-                      {type.icon}
-                      {type.label}
-                    </button>
+                <p className="text-[10px] text-obsidian-text-muted uppercase mb-2">Estrategias Activas</p>
+                <div className="space-y-1">
+                  {selectedNegotiation?.activeStrategies?.map((strategy) => (
+                    <div key={strategy} className="flex items-center gap-2 text-xs">
+                      <span>{STRATEGY_INFO[strategy].icon}</span>
+                      <span className="text-obsidian-text-primary">{STRATEGY_INFO[strategy].name}</span>
+                    </div>
                   ))}
                 </div>
               </div>
             </div>
           </ObsidianCard>
+        </div>
 
-          <ObsidianCard className="mb-6">
-            <h3 className="text-lg font-normal text-[#F5F5F7] mb-4">Parámetros de Precio</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs text-obsidian-text-muted uppercase tracking-wider block mb-2">
-                    Precio Objetivo *
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian-text-muted">$</span>
-                    <input
-                      type="number"
-                      value={createForm.targetPrice || ''}
-                      onChange={(e) => setCreateForm({ ...createForm, targetPrice: Number(e.target.value) })}
-                      placeholder="0"
-                      className="w-full bg-white/[0.02] border border-white/[0.1] rounded-lg pl-8 pr-4 py-2 text-white focus:outline-none focus:border-obsidian-accent transition-colors"
-                    />
-                  </div>
+        {/* --- CENTER PANEL: ANÁLISIS --- */}
+        <div className="col-span-5 flex flex-col gap-6">
+          {/* NASH ENGINE */}
+          <ObsidianCard className="relative flex flex-col h-[400px]" noPadding>
+             <div className="absolute top-4 left-4 z-10">
+                <h2 className="text-sm font-medium text-white tracking-widest">MOTOR DE EQUILIBRIO NASH</h2>
+                <div className="flex items-center gap-2 mt-1">
+                   <div className="w-1.5 h-1.5 rounded-full bg-obsidian-accent animate-pulse"></div>
+                   <span className="text-[9px] text-obsidian-text-muted">LIVE ANALYSIS • {selectedNegotiation?.counterparty.toUpperCase()}</span>
                 </div>
-                <div>
-                  <label className="text-xs text-obsidian-text-muted uppercase tracking-wider block mb-2">
-                    Precio Límite *
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian-text-muted">$</span>
-                    <input
-                      type="number"
-                      value={createForm.limitPrice || ''}
-                      onChange={(e) => setCreateForm({ ...createForm, limitPrice: Number(e.target.value) })}
-                      placeholder="0"
-                      className="w-full bg-white/[0.02] border border-white/[0.1] rounded-lg pl-8 pr-4 py-2 text-white focus:outline-none focus:border-obsidian-accent transition-colors"
-                    />
-                  </div>
+             </div>
+             <canvas ref={canvasRef} className="w-full h-full bg-[#050505]" />
+          </ObsidianCard>
+
+          {/* CHAT DE NEGOCIACIÓN */}
+          <ObsidianCard className="flex flex-col h-[600px]" noPadding>
+             {/* Header estilo WhatsApp */}
+             <div className="px-4 py-3 bg-[#0F0F12] border-b border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
+                     {selectedNegotiation?.counterparty.charAt(0)}
+                   </div>
+                   <div>
+                     <p className="text-sm text-white font-medium">{selectedNegotiation?.counterparty}</p>
+                     <p className="text-[10px] text-green-400 flex items-center gap-1">
+                       <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                       En negociación activa
+                     </p>
+                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                   <span className="text-[9px] text-obsidian-text-muted">IA: {aggressiveness}%</span>
+                   <MessageSquare size={16} className="text-obsidian-text-muted" />
+                </div>
+             </div>
+
+             {/* Área de mensajes */}
+             <div className="flex-1 overflow-y-auto p-4 bg-[#0B0B0D] space-y-3">
+                {selectedNegotiation?.offers && selectedNegotiation.offers.length > 0 ? (
+                  selectedNegotiation.offers.map((offer, index) => {
+                    const isUs = offer.from === 'US';
+                    const prevOffer = index > 0 ? selectedNegotiation.offers![index - 1] : null;
+                    const priceDiff = (prevOffer?.amount && offer.amount) ? offer.amount - prevOffer.amount : 0;
+
+                    return (
+                      <div key={offer.id} className={`flex ${isUs ? 'justify-end' : 'justify-start'} animate-[slideIn_0.3s_ease-out]`}>
+                        <div className={`max-w-[85%] ${isUs ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                          {/* Etiqueta de quién envía */}
+                          <span className="text-[9px] text-obsidian-text-muted px-2">
+                            {isUs ? 'Tú' : selectedNegotiation.counterparty}
+                          </span>
+
+                          {/* Burbuja de mensaje */}
+                          <div className={`rounded-2xl px-4 py-3 max-w-md ${
+                            isUs
+                              ? 'bg-obsidian-accent text-white rounded-br-sm'
+                              : 'bg-[#1A1A1E] text-white rounded-bl-sm border border-white/10'
+                          }`}>
+                            {/* Mensaje principal - conversacional */}
+                            <p className="text-sm leading-relaxed mb-3">{offer.message}</p>
+
+                            {/* Metadatos (monto, términos) - pequeños y discretos */}
+                            {offer.amount && (
+                              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+                                <div className="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded text-xs">
+                                  <DollarSign size={12} className="opacity-60" />
+                                  <span className="font-mono">{offer.amount.toLocaleString()}</span>
+                                  {priceDiff !== 0 && prevOffer?.amount && (
+                                    <span className={`text-[10px] ${
+                                      priceDiff > 0 ? 'text-red-300' : 'text-green-300'
+                                    }`}>
+                                      {priceDiff > 0 ? '↑' : '↓'} {Math.abs(priceDiff).toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+                                {offer.terms && (
+                                  <span className="text-[10px] opacity-60 bg-black/20 px-2 py-1 rounded">
+                                    {offer.terms}
+                                  </span>
+                                )}
+                                <div className="flex items-center gap-1 ml-auto">
+                                  <div className="w-12 h-1 bg-black/20 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full transition-all"
+                                      style={{
+                                        width: `${offer.sentiment * 100}%`,
+                                        backgroundColor: getSentimentColor(offer.sentiment)
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="text-[9px] opacity-60">{getSentimentLabel(offer.sentiment)}</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Timestamp */}
+                          <span className="text-[9px] text-obsidian-text-muted px-2">
+                            {new Date(offer.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-obsidian-text-muted">
+                    <MessageSquare size={48} className="mb-3 opacity-20" />
+                    <p className="text-sm">No hay ofertas aún</p>
+                    <p className="text-xs">Las ofertas aparecerán aquí</p>
+                  </div>
+                )}
+
+                {/* Indicador de escritura (IA pensando) */}
+                {selectedNegotiation?.status === 'ACTIVE' && (
+                  <div className="flex justify-start">
+                    <div className="bg-[#1A1A1E] rounded-2xl rounded-bl-sm px-4 py-3 border border-white/10 flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-obsidian-accent rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-obsidian-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-obsidian-accent rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                      <span className="text-[10px] text-obsidian-text-muted">IA analizando...</span>
+                    </div>
+                  </div>
+                )}
+             </div>
+
+             {/* Input de nueva oferta */}
+             <div className="p-3 bg-[#0F0F12] border-t border-white/10">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Escribe tu mensaje aquí..."
+                    className="flex-1 bg-[#1A1A1E] border border-white/10 rounded-full px-4 py-2.5 text-sm text-white focus:border-obsidian-accent outline-none placeholder-white/30"
+                  />
+                  <button className="w-10 h-10 rounded-full bg-obsidian-accent flex items-center justify-center hover:bg-obsidian-accent/80 transition-colors">
+                    <Send size={16} className="text-white" />
+                  </button>
+                </div>
+                <p className="text-[9px] text-obsidian-text-muted mt-2 px-1">💡 Escribe naturalmente. La IA extraerá los términos clave automáticamente.</p>
+             </div>
+          </ObsidianCard>
+        </div>
+
+        {/* --- RIGHT PANEL: METRICS & ANALYSIS --- */}
+        <div className="col-span-4 flex flex-col gap-4">
+
+           {/* ANÁLISIS DE SENTIMIENTO */}
+           <ObsidianCard className="flex flex-col">
+              <div className="flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
+                 <Activity size={14} className="text-obsidian-accent" />
+                 <h2 className="text-xs font-bold tracking-[0.2em] text-obsidian-text-muted">ANÁLISIS SENTIMIENTO</h2>
               </div>
+
+              <div className="flex items-center justify-center py-4">
+                 <div className="relative w-24 h-24">
+                   <svg className="w-full h-full transform -rotate-90">
+                     <circle cx="48" cy="48" r="40" stroke="#2A2A2E" strokeWidth="8" fill="none" />
+                     <circle
+                       cx="48" cy="48" r="40"
+                       stroke={getSentimentColor(selectedNegotiation?.sentiment || 0)}
+                       strokeWidth="8"
+                       fill="none"
+                       strokeDasharray={`${(selectedNegotiation?.sentiment || 0) * 251.2} 251.2`}
+                       className="transition-all duration-500"
+                     />
+                   </svg>
+                   <div className="absolute inset-0 flex flex-col items-center justify-center">
+                     <span className="text-2xl font-light text-white">{((selectedNegotiation?.sentiment || 0) * 100).toFixed(0)}%</span>
+                     <span className="text-[8px] text-obsidian-text-muted uppercase">{getSentimentLabel(selectedNegotiation?.sentiment || 0)}</span>
+                   </div>
+                 </div>
+              </div>
+           </ObsidianCard>
+
+           {/* PRESUPUESTO */}
+           <ObsidianCard className="flex flex-col">
+              <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                 <div className="flex items-center gap-2">
+                   <DollarSign size={14} className="text-obsidian-accent" />
+                   <h2 className="text-xs font-bold tracking-[0.2em] text-obsidian-text-muted">PRESUPUESTO</h2>
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                 {/* Resumen rápido */}
+                 <div className="text-center py-4">
+                   <p className="text-[10px] text-obsidian-text-muted uppercase mb-2">
+                     {selectedNegotiation?.type === 'BUY' ? 'Presupuesto Máximo' : 'Precio Mínimo'}
+                   </p>
+                   <p className="text-3xl font-light text-white font-mono mb-1">
+                     ${selectedNegotiation?.batna?.toLocaleString()}
+                   </p>
+                   <div className="flex items-center justify-center gap-2 mt-2">
+                     <span className="text-[9px] text-obsidian-text-muted">Objetivo:</span>
+                     <span className="text-xs text-green-400 font-mono">
+                       ${selectedNegotiation?.targetPrice?.toLocaleString()}
+                     </span>
+                   </div>
+                   <p className="text-[8px] text-obsidian-text-muted mt-1">
+                     {selectedNegotiation?.type === 'BUY' ? '📥 Comprando' : '📤 Vendiendo'}
+                   </p>
+                 </div>
+
+                 {/* Botón para abrir popup */}
+                 <button
+                   onClick={() => setShowBudgetPopup(true)}
+                   className="w-full py-2.5 bg-obsidian-accent/10 hover:bg-obsidian-accent/20 border border-obsidian-accent/30 rounded text-xs text-obsidian-accent transition-all flex items-center justify-center gap-2"
+                 >
+                   <Eye size={14} />
+                   Ver Detalles de Presupuesto
+                 </button>
+              </div>
+           </ObsidianCard>
+
+           {/* SMART CONTRACT */}
+           <ObsidianCard className="flex-1 flex flex-col">
+              <div className="flex items-center gap-2 mb-3 text-white border-b border-white/5 pb-2">
+                 <Lock size={14} className="text-obsidian-accent" />
+                 <h2 className="text-xs font-bold tracking-[0.2em] text-obsidian-text-muted">CONTRATO</h2>
+              </div>
+
+              <div className="space-y-2 flex-1 text-xs">
+                 {[
+                    { label: 'Bloqueo', val: 'Fijo' },
+                    { label: 'SLA', val: '5%' },
+                    { label: 'Jurisdicción', val: 'DAO' },
+                 ].map((term, i) => (
+                    <div key={i} className="flex justify-between items-center p-2 bg-white/[0.02] rounded border border-white/5">
+                       <span className="text-[10px] text-obsidian-text-muted">{term.label}</span>
+                       <span className="text-[10px] text-white font-mono">{term.val}</span>
+                    </div>
+                 ))}
+              </div>
+
+              <ObsidianButton variant="outline" className="text-xs border-green-500/30 text-green-400 hover:bg-green-500/10 mt-3">
+                 FIRMAR & EJECUTAR
+              </ObsidianButton>
+           </ObsidianCard>
+
+        </div>
+
+      </div>
+
+      {/* Panel de Estrategias de IA */}
+      {showStrategyPanel && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowStrategyPanel(false)}>
+          <div className="bg-[#16161A] border border-white/10 rounded-lg p-6 max-w-2xl w-full m-6 max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-3">
               <div>
-                <label className="text-xs text-obsidian-text-muted uppercase tracking-wider block mb-2">
-                  Fecha Límite
-                </label>
-                <input
-                  type="datetime-local"
-                  value={createForm.deadline}
-                  onChange={(e) => setCreateForm({ ...createForm, deadline: e.target.value })}
-                  className="w-full bg-white/[0.02] border border-white/[0.1] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-obsidian-accent transition-colors"
-                />
+                <h2 className="text-lg font-light text-white">Estrategias de IA Activas</h2>
+                <p className="text-xs text-obsidian-text-muted mt-1">Tácticas psicológicas aplicadas por el agente de negociación</p>
+              </div>
+              <button onClick={() => setShowStrategyPanel(false)} className="text-obsidian-text-muted hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Estrategias Activas */}
+            <div className="mb-6">
+              <h3 className="text-sm text-obsidian-accent font-medium mb-3">Estrategias Activas en {selectedNegotiation?.counterparty}</h3>
+              <div className="space-y-2">
+                {selectedNegotiation?.activeStrategies?.map((strategy) => (
+                  <div key={strategy} className="p-3 bg-obsidian-accent/5 border border-obsidian-accent/20 rounded">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{STRATEGY_INFO[strategy].icon}</span>
+                      <div className="flex-1">
+                        <h4 className="text-white font-medium text-sm">{STRATEGY_INFO[strategy].name}</h4>
+                        <p className="text-xs text-obsidian-text-muted mt-1">{STRATEGY_INFO[strategy].description}</p>
+                      </div>
+                      <CheckCircle size={16} className="text-green-400" />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          </ObsidianCard>
 
-          <ObsidianCard className="mb-6">
-            <h3 className="text-lg font-normal text-[#F5F5F7] mb-4">Estrategia de IA</h3>
+            {/* Todas las Estrategias Disponibles */}
             <div>
-              <ObsidianSlider
-                label="Nivel de Agresividad"
-                min={0}
-                max={100}
-                value={createForm.aggressiveness}
-                onChange={(e) => setCreateForm({ ...createForm, aggressiveness: Number(e.target.value) })}
-                valueDisplay={`${createForm.aggressiveness}%`}
-              />
-              <p className="text-xs text-obsidian-text-muted mt-2">
-                {createForm.aggressiveness < 33 && 'Conservador: Prioriza mantener buena relación con la contraparte'}
-                {createForm.aggressiveness >= 33 && createForm.aggressiveness < 66 && 'Equilibrado: Balance entre objetivos y relación'}
-                {createForm.aggressiveness >= 66 && 'Agresivo: Prioriza alcanzar el objetivo a toda costa'}
-              </p>
+              <h3 className="text-sm text-obsidian-text-muted font-medium mb-3">Todas las Estrategias Disponibles</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {(Object.entries(STRATEGY_INFO) as [AIStrategy, typeof STRATEGY_INFO[AIStrategy]][]).map(([key, info]) => {
+                  const isActive = selectedNegotiation?.activeStrategies?.includes(key);
+                  return (
+                    <div key={key} className={`p-3 rounded border ${isActive ? 'bg-white/[0.02] border-white/20' : 'bg-white/[0.01] border-white/5'}`}>
+                      <div className="flex items-start gap-2 mb-2">
+                        <span className="text-xl">{info.icon}</span>
+                        <div className="flex-1">
+                          <h4 className="text-white font-medium text-xs">{info.name}</h4>
+                        </div>
+                        {isActive && <div className="w-2 h-2 rounded-full bg-green-400"></div>}
+                      </div>
+                      <p className="text-[10px] text-obsidian-text-muted">{info.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </ObsidianCard>
 
-          <div className="flex justify-end gap-4 pb-6">
-            <button
-              onClick={() => setViewMode('dashboard')}
-              className="px-6 py-2 border border-white/[0.1] rounded-lg text-white hover:bg-white/[0.05] transition-all"
-            >
-              Cancelar
-            </button>
-            <ObsidianButton
-              onClick={handleCreateNegotiation}
-              icon={<PlayCircle size={16} />}
-            >
-              Iniciar Negociación
-            </ObsidianButton>
+            {/* Control de Agresividad */}
+            <div className="mt-6 p-4 bg-white/[0.02] rounded border border-white/5">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm text-white font-medium">Nivel de Agresividad del Agente</h3>
+                <span className="text-sm text-obsidian-accent font-mono">{aggressiveness}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={aggressiveness}
+                onChange={(e) => setAggressiveness(Number(e.target.value))}
+                className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer
+                  [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
+                  [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-obsidian-accent
+                  [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full
+                  [&::-moz-range-thumb]:bg-obsidian-accent [&::-moz-range-thumb]:border-0"
+              />
+              <div className="flex justify-between text-[10px] text-obsidian-text-muted mt-2">
+                <span>Conservador</span>
+                <span>Balanceado</span>
+                <span>Agresivo</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
+      )}
 
-  const renderDetail = () => {
-    if (!selectedNegotiation) return null;
-
-    return (
-      <div className="w-full h-screen bg-[#0B0B0D] text-obsidian-text-primary px-6 py-6 flex flex-col overflow-hidden">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setViewMode('dashboard')}
-              className="p-2 rounded-lg border border-white/[0.1] hover:bg-white/[0.05] transition-all"
-            >
-              <ArrowLeft size={20} className="text-white" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-light text-[#F5F5F7] tracking-wide flex items-center gap-3">
-                {selectedNegotiation.product}
-                <span className="text-[10px] text-obsidian-text-muted font-mono opacity-60">[{selectedNegotiation.id}]</span>
-              </h1>
-              <p className="text-sm text-obsidian-text-muted">
-                {selectedNegotiation.counterparty}
-              </p>
+      {/* Panel de Historial de Ofertas */}
+      {showOffersHistory && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowOffersHistory(false)}>
+          <div className="bg-[#16161A] border border-white/10 rounded-lg p-6 max-w-3xl w-full m-6 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-3">
+              <div>
+                <h2 className="text-lg font-light text-white">Historial de Ofertas</h2>
+                <p className="text-xs text-obsidian-text-muted mt-1">{selectedNegotiation?.counterparty} • {selectedNegotiation?.product}</p>
+              </div>
+              <button onClick={() => setShowOffersHistory(false)} className="text-obsidian-text-muted hover:text-white">
+                <X size={20} />
+              </button>
             </div>
+
+            <div className="flex-1 overflow-y-auto">
+              {!selectedNegotiation?.offers || selectedNegotiation.offers.length === 0 ? (
+                <div className="text-center py-12 text-obsidian-text-muted">
+                  <MessageSquare size={48} className="mx-auto mb-4 opacity-20" />
+                  <p>No hay ofertas registradas</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {selectedNegotiation.offers.map((offer, index) => {
+                    const isUs = offer.from === 'US';
+                    const prevOffer = index > 0 ? selectedNegotiation.offers![index - 1] : null;
+                    const priceDiff = prevOffer ? offer.amount - prevOffer.amount : 0;
+
+                    return (
+                      <div key={offer.id} className={`p-4 rounded border ${isUs ? 'bg-green-500/5 border-green-500/20 ml-12' : 'bg-blue-500/5 border-blue-500/20 mr-12'}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-2">
+                            {isUs ? <ArrowRight className="text-green-400" size={16} /> : <ArrowLeft className="text-blue-400" size={16} />}
+                            <span className="text-xs font-medium text-white">
+                              {isUs ? 'Nuestra Oferta' : 'Contraoferta'}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-obsidian-text-muted">
+                            {new Date(offer.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+
+                        <div className="flex items-baseline gap-3 mb-2">
+                          <span className="text-2xl font-light text-white">${offer.amount.toLocaleString()}</span>
+                          {priceDiff !== 0 && (
+                            <span className={`text-xs flex items-center gap-1 ${priceDiff > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                              {priceDiff > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                              {Math.abs(priceDiff).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-xs text-obsidian-text-muted mb-2">{offer.terms}</p>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-obsidian-text-muted">Sentimiento:</span>
+                          <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div
+                              className="h-full transition-all"
+                              style={{
+                                width: `${offer.sentiment * 100}%`,
+                                backgroundColor: getSentimentColor(offer.sentiment)
+                              }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-mono" style={{ color: getSentimentColor(offer.sentiment) }}>
+                            {(offer.sentiment * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Estadísticas del historial */}
+            {selectedNegotiation?.offers && selectedNegotiation.offers.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-[10px] text-obsidian-text-muted mb-1">Total Ofertas</p>
+                  <p className="text-lg text-white font-light">{selectedNegotiation.offers.length}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] text-obsidian-text-muted mb-1">Oferta Inicial</p>
+                  <p className="text-lg text-white font-light">${selectedNegotiation.offers[0].amount.toLocaleString()}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] text-obsidian-text-muted mb-1">Oferta Actual</p>
+                  <p className="text-lg text-white font-light">${selectedNegotiation.offers[selectedNegotiation.offers.length - 1].amount.toLocaleString()}</p>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-4">
-            <div className={`px-4 py-2 rounded-full text-xs font-medium tracking-widest uppercase flex items-center gap-2 border ${getStatusColor(selectedNegotiation.status)}`}>
-              {getStatusIcon(selectedNegotiation.status)}
-              {selectedNegotiation.status}
-            </div>
-            <div className="flex gap-2">
-              {selectedNegotiation.status === 'ACTIVE' && (
-                <button
-                  onClick={() => handleNegotiationAction(selectedNegotiation.id, 'pause')}
-                  className="p-2 rounded-lg border border-white/[0.1] hover:bg-white/[0.05] transition-all"
-                >
-                  <Pause size={16} className="text-yellow-400" />
-                </button>
-              )}
-              {selectedNegotiation.status === 'PAUSED' && (
-                <button
-                  onClick={() => handleNegotiationAction(selectedNegotiation.id, 'resume')}
-                  className="p-2 rounded-lg border border-white/[0.1] hover:bg-white/[0.05] transition-all"
-                >
-                  <PlayCircle size={16} className="text-[#45FF9A]" />
-                </button>
-              )}
+        </div>
+      )}
+
+      {/* POPUP DE PRESUPUESTO */}
+      {showBudgetPopup && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6" onClick={() => setShowBudgetPopup(false)}>
+          <div className="bg-[#0F0F12] border border-white/10 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <DollarSign size={20} className="text-obsidian-accent" />
+                <h2 className="text-lg font-light text-white tracking-wider">DETALLES DE PRESUPUESTO</h2>
+              </div>
               <button
-                onClick={() => handleNegotiationAction(selectedNegotiation.id, 'cancel')}
-                className="p-2 rounded-lg border border-white/[0.1] hover:bg-red-500/[0.1] transition-all"
+                onClick={() => setShowBudgetPopup(false)}
+                className="p-2 hover:bg-white/5 rounded transition-colors"
               >
-                <StopCircle size={16} className="text-red-400" />
+                <X size={20} className="text-obsidian-text-muted hover:text-white" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-6">
+              {/* Resumen Principal */}
+              <div className="bg-obsidian-accent/5 border border-obsidian-accent/20 rounded-lg p-6">
+                <div className="mb-4 text-center">
+                  <span className={`text-xs px-3 py-1 rounded-full ${
+                    selectedNegotiation?.type === 'BUY'
+                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                      : 'bg-green-500/20 text-green-400 border border-green-500/30'
+                  }`}>
+                    {selectedNegotiation?.type === 'BUY' ? '📥 COMPRANDO' : '📤 VENDIENDO'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  {selectedNegotiation?.type === 'BUY' ? (
+                    <>
+                      <div className="text-center">
+                        <p className="text-[10px] text-obsidian-text-muted uppercase mb-2">Precio Ideal</p>
+                        <p className="text-2xl font-light text-green-400 font-mono">
+                          ${selectedNegotiation?.targetPrice?.toLocaleString()}
+                        </p>
+                        <p className="text-[8px] text-obsidian-text-muted mt-1">Lo que quieres pagar</p>
+                      </div>
+                      <div className="text-center border-l border-r border-white/10">
+                        <p className="text-[10px] text-obsidian-text-muted uppercase mb-2">Precio Reserva</p>
+                        <p className="text-2xl font-light text-yellow-400 font-mono">
+                          ${selectedNegotiation?.reservationPrice?.toLocaleString()}
+                        </p>
+                        <p className="text-[8px] text-obsidian-text-muted mt-1">Límite aceptable</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-obsidian-text-muted uppercase mb-2">Máximo Absoluto</p>
+                        <p className="text-2xl font-light text-red-400 font-mono">
+                          ${selectedNegotiation?.batna?.toLocaleString()}
+                        </p>
+                        <p className="text-[8px] text-obsidian-text-muted mt-1">No pagar más</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-center">
+                        <p className="text-[10px] text-obsidian-text-muted uppercase mb-2">Mínimo Absoluto</p>
+                        <p className="text-2xl font-light text-red-400 font-mono">
+                          ${selectedNegotiation?.batna?.toLocaleString()}
+                        </p>
+                        <p className="text-[8px] text-obsidian-text-muted mt-1">No cobrar menos</p>
+                      </div>
+                      <div className="text-center border-l border-r border-white/10">
+                        <p className="text-[10px] text-obsidian-text-muted uppercase mb-2">Precio Reserva</p>
+                        <p className="text-2xl font-light text-yellow-400 font-mono">
+                          ${selectedNegotiation?.reservationPrice?.toLocaleString()}
+                        </p>
+                        <p className="text-[8px] text-obsidian-text-muted mt-1">Límite aceptable</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[10px] text-obsidian-text-muted uppercase mb-2">Precio Ideal</p>
+                        <p className="text-2xl font-light text-green-400 font-mono">
+                          ${selectedNegotiation?.targetPrice?.toLocaleString()}
+                        </p>
+                        <p className="text-[8px] text-obsidian-text-muted mt-1">Lo que quieres cobrar</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Barra de progreso visual */}
+              {selectedNegotiation && selectedNegotiation.targetPrice && selectedNegotiation.batna && (
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-obsidian-text-muted uppercase">Posición Actual</p>
+                    <p className="text-lg text-white font-mono">${selectedNegotiation.amount.toLocaleString()}</p>
+                  </div>
+                  <div className="h-3 bg-white/5 rounded-full overflow-hidden relative">
+                    <div
+                      className={`absolute h-full opacity-30 ${
+                        selectedNegotiation.type === 'BUY'
+                          ? 'bg-gradient-to-r from-green-500 via-yellow-500 to-red-500'
+                          : 'bg-gradient-to-r from-red-500 via-yellow-500 to-green-500'
+                      }`}
+                      style={{ width: '100%' }}
+                    />
+                    <div
+                      className="absolute h-full w-2 bg-white shadow-[0_0_10px_white] rounded-full"
+                      style={{
+                        left: selectedNegotiation.type === 'BUY'
+                          ? `${Math.max(0, Math.min(100, ((selectedNegotiation.amount - selectedNegotiation.targetPrice) / (selectedNegotiation.batna - selectedNegotiation.targetPrice)) * 100))}%`
+                          : `${Math.max(0, Math.min(100, ((selectedNegotiation.batna - selectedNegotiation.amount) / (selectedNegotiation.batna - selectedNegotiation.targetPrice)) * 100))}%`
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[9px] text-obsidian-text-muted">
+                    {selectedNegotiation.type === 'BUY' ? (
+                      <>
+                        <span>💚 Precio Ideal</span>
+                        <span>🔴 Límite Máximo</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🔴 Límite Mínimo</span>
+                        <span>💚 Precio Ideal</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Zona de Negociación */}
+              {selectedNegotiation?.zopaDetected && selectedNegotiation?.zopaRange && (
+                <div className="bg-green-500/5 border border-green-500/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle size={16} className="text-green-400" />
+                    <h3 className="text-sm font-medium text-green-400 uppercase tracking-wider">Zona de Acuerdo Detectada</h3>
+                  </div>
+                  <p className="text-xs text-obsidian-text-muted mb-2">
+                    Rango óptimo para cerrar el acuerdo:
+                  </p>
+                  <p className="text-xl text-white font-mono">
+                    ${selectedNegotiation.zopaRange.min.toLocaleString()} - ${selectedNegotiation.zopaRange.max.toLocaleString()}
+                  </p>
+                </div>
+              )}
+
+              {/* Información Adicional */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 rounded-lg p-4">
+                  <p className="text-[10px] text-obsidian-text-muted uppercase mb-2">Diferencia con Objetivo</p>
+                  <p className={`text-lg font-mono ${
+                    selectedNegotiation && selectedNegotiation.targetPrice
+                      ? (selectedNegotiation.type === 'BUY'
+                        ? (selectedNegotiation.amount > selectedNegotiation.targetPrice ? 'text-red-400' : 'text-green-400')
+                        : (selectedNegotiation.amount < selectedNegotiation.targetPrice ? 'text-red-400' : 'text-green-400'))
+                      : 'text-white'
+                  }`}>
+                    {selectedNegotiation && selectedNegotiation.targetPrice
+                      ? `${selectedNegotiation.amount > selectedNegotiation.targetPrice ? '+' : ''}$${Math.abs(selectedNegotiation.amount - selectedNegotiation.targetPrice).toLocaleString()}`
+                      : '-'
+                    }
+                  </p>
+                  <p className="text-[8px] text-obsidian-text-muted mt-1">
+                    {selectedNegotiation?.type === 'BUY'
+                      ? (selectedNegotiation.amount > selectedNegotiation.targetPrice ? 'Estás pagando más' : 'Estás ahorrando')
+                      : (selectedNegotiation.amount < selectedNegotiation.targetPrice ? 'Estás cobrando menos' : 'Ganancia extra')
+                    }
+                  </p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-4">
+                  <p className="text-[10px] text-obsidian-text-muted uppercase mb-2">
+                    {selectedNegotiation?.type === 'BUY' ? 'Margen hasta Límite' : 'Margen sobre Mínimo'}
+                  </p>
+                  <p className="text-lg text-white font-mono">
+                    {selectedNegotiation && selectedNegotiation.batna
+                      ? `$${Math.abs(selectedNegotiation.batna - selectedNegotiation.amount).toLocaleString()}`
+                      : '-'
+                    }
+                  </p>
+                  <p className="text-[8px] text-obsidian-text-muted mt-1">
+                    {selectedNegotiation?.type === 'BUY' ? 'Cuánto más puedes pagar' : 'Cuánto más estás ganando'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Recomendación IA */}
+              <div className="bg-obsidian-accent/10 border border-obsidian-accent/30 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Zap size={16} className="text-obsidian-accent mt-0.5" />
+                  <div>
+                    <h3 className="text-sm font-medium text-white mb-2">Recomendación IA</h3>
+                    <p className="text-xs text-obsidian-text-muted leading-relaxed">
+                      {selectedNegotiation && selectedNegotiation.targetPrice && (
+                        selectedNegotiation.type === 'BUY' ? (
+                          selectedNegotiation.amount > selectedNegotiation.targetPrice
+                            ? `Estás pagando $${(selectedNegotiation.amount - selectedNegotiation.targetPrice).toLocaleString()} más de tu objetivo. Intenta negociar hacia abajo o busca beneficios adicionales (mejores términos de pago, envío gratis, garantías extendidas) para justificar el sobreprecio.`
+                            : `¡Excelente! Estás ahorrando $${(selectedNegotiation.targetPrice - selectedNegotiation.amount).toLocaleString()}. Puedes cerrar el acuerdo ahora o intentar negociar un poco más abajo si crees que hay margen.`
+                        ) : (
+                          selectedNegotiation.amount < selectedNegotiation.targetPrice
+                            ? `Estás cobrando $${(selectedNegotiation.targetPrice - selectedNegotiation.amount).toLocaleString()} menos de tu objetivo. Intenta negociar hacia arriba mostrando valor añadido o mantén firme si el cliente muestra resistencia.`
+                            : `¡Excelente! Estás ganando $${(selectedNegotiation.amount - selectedNegotiation.targetPrice).toLocaleString()} más de lo esperado. Puedes cerrar el acuerdo ahora o intentar optimizar aún más si el cliente tiene margen.`
+                        )
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-white/10 flex justify-end">
+              <button
+                onClick={() => setShowBudgetPopup(false)}
+                className="px-6 py-2.5 bg-obsidian-accent hover:bg-obsidian-accent/80 text-white rounded text-sm transition-colors"
+              >
+                Cerrar
               </button>
             </div>
           </div>
         </div>
-
-        <div className="flex-1 flex gap-6 overflow-hidden">
-          {/* Left: Nash & Protocol */}
-          <div className="w-[60%] flex flex-col gap-4">
-            {/* Nash Equilibrium */}
-            <ObsidianCard className="flex-1 relative" noPadding>
-              <div className="absolute top-4 left-4 z-10">
-                <div className="flex items-center gap-2 mb-1">
-                  <ArrowRightLeft size={14} className="text-obsidian-text-muted" />
-                  <span className="text-[10px] uppercase tracking-widest text-obsidian-text-muted">Motor de Equilibrio Nash</span>
-                </div>
-                {selectedNegotiation.zopaDetected && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <CheckCircle size={12} className="text-[#45FF9A]" />
-                    <span className="text-xs text-[#45FF9A]">ZOPA Detectado</span>
-                  </div>
-                )}
-              </div>
-              <canvas ref={canvasRef} className="w-full h-full" />
-            </ObsidianCard>
-
-            {/* Protocol Stream */}
-            <ObsidianCard className="flex-[0.8] flex flex-col overflow-hidden" noPadding>
-              <div className="p-3 border-b border-white/[0.04] bg-[#0F0F12]/90 flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-obsidian-accent animate-pulse"></div>
-                  <span className="text-[9px] font-mono text-obsidian-text-muted">PROTOCOL STREAM // PORT: 443</span>
-                </div>
-              </div>
-              <div className="flex-1 p-4 overflow-y-auto font-mono text-[10px] space-y-1.5 bg-black/40">
-                {protocolLogs.map((log, i) => {
-                  let colorClass = 'text-obsidian-text-muted';
-                  if(log.includes('[MNP-OUT]')) colorClass = 'text-obsidian-success';
-                  if(log.includes('[AI-CORE]')) colorClass = 'text-obsidian-accent';
-                  return (
-                    <div key={i} className="flex gap-2 opacity-90">
-                      <span className="opacity-30 select-none">{(1000 + i).toString(16).toUpperCase()}</span>
-                      <span className={colorClass}>{log}</span>
-                    </div>
-                  )
-                })}
-                <div className="animate-pulse text-obsidian-accent">_</div>
-              </div>
-            </ObsidianCard>
-          </div>
-
-          {/* Right: Info & Strategy */}
-          <div className="w-[40%] flex flex-col gap-4 overflow-y-auto">
-            {/* Negotiation Info */}
-            <ObsidianCard>
-              <h3 className="text-sm font-normal text-white mb-4 uppercase tracking-wider">Información</h3>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <div className="text-[10px] text-obsidian-text-muted uppercase mb-1">Oferta Actual</div>
-                    <div className="text-lg font-thin text-white">${selectedNegotiation.currentOffer.toLocaleString()}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-obsidian-text-muted uppercase mb-1">Objetivo</div>
-                    <div className="text-lg font-thin text-white">${selectedNegotiation.targetPrice.toLocaleString()}</div>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-obsidian-text-muted uppercase mb-1">Progreso</div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-white/[0.05] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-obsidian-accent to-[#45FF9A] transition-all duration-300"
-                        style={{ width: `${selectedNegotiation.progress}%` }}
-                      />
-                    </div>
-                    <span className="text-sm text-white">{selectedNegotiation.progress}%</span>
-                  </div>
-                </div>
-              </div>
-            </ObsidianCard>
-
-            {/* Strategy */}
-            <ObsidianCard>
-              <h3 className="text-sm font-normal text-white mb-4 uppercase tracking-wider flex items-center gap-2">
-                <Zap size={14} />
-                Estrategia Actual
-              </h3>
-              <div className="space-y-3">
-                <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-lg">
-                  <div className="text-xs text-obsidian-text-muted mb-1">Táctica</div>
-                  <div className="text-sm text-white">{selectedNegotiation.strategy}</div>
-                </div>
-                <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-lg">
-                  <div className="text-xs text-obsidian-text-muted mb-1">Análisis de Sentimiento</div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1">
-                      <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
-                        <div
-                          className={`h-full transition-all duration-300 ${
-                            selectedNegotiation.sentiment > 0.7 ? 'bg-green-500' :
-                            selectedNegotiation.sentiment > 0.4 ? 'bg-yellow-500' : 'bg-red-500'
-                          }`}
-                          style={{ width: `${selectedNegotiation.sentiment * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                    <span className="text-sm text-white">{(selectedNegotiation.sentiment * 100).toFixed(0)}%</span>
-                  </div>
-                </div>
-                <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-lg">
-                  <div className="text-xs text-obsidian-text-muted mb-1">Agresividad</div>
-                  <ObsidianSlider
-                    label=""
-                    min={0}
-                    max={100}
-                    value={selectedNegotiation.aggressiveness}
-                    onChange={() => {}}
-                    valueDisplay={`${selectedNegotiation.aggressiveness}%`}
-                  />
-                </div>
-              </div>
-            </ObsidianCard>
-
-            {/* Contract Preview */}
-            {selectedNegotiation.status === 'CLOSED' && (
-              <ObsidianCard className="border-2 border-[#45FF9A]/30">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-normal text-white uppercase tracking-wider flex items-center gap-2">
-                    <FileCode size={14} className="text-[#45FF9A]" />
-                    Contrato Listo
-                  </h3>
-                  <CheckCircle size={16} className="text-[#45FF9A]" />
-                </div>
-                <p className="text-xs text-obsidian-text-muted mb-4">
-                  La negociación se cerró exitosamente. Revisa y firma el contrato inteligente.
-                </p>
-                <ObsidianButton
-                  onClick={() => setViewMode('contract')}
-                  icon={<FileText size={16} />}
-                  className="w-full"
-                >
-                  Ver Contrato
-                </ObsidianButton>
-              </ObsidianCard>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderContract = () => (
-    <div className="w-full h-screen bg-[#0B0B0D] text-obsidian-text-primary px-6 py-6 flex flex-col overflow-hidden">
-      <div className="mb-6 flex items-center gap-4">
-        <button
-          onClick={() => setViewMode('detail')}
-          className="p-2 rounded-lg border border-white/[0.1] hover:bg-white/[0.05] transition-all"
-        >
-          <ArrowLeft size={20} className="text-white" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-light text-[#F5F5F7] tracking-wide">Contrato Inteligente</h1>
-          <p className="text-sm text-obsidian-text-muted">Revisión y firma de contrato</p>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Contract Terms */}
-          <ObsidianCard>
-            <h3 className="text-lg font-normal text-white mb-4">Términos del Contrato</h3>
-            <div className="space-y-3">
-              {[
-                { label: 'Bloqueo de Precio', value: 'Fijo', mandatory: true, accepted: true },
-                { label: 'Penalización SLA', value: '5% por día de retraso', mandatory: true, accepted: true },
-                { label: 'Jurisdicción', value: 'Tribunal DAO', mandatory: true, accepted: true },
-                { label: 'Seguro de Envío', value: 'Incluido', mandatory: false, accepted: true },
-                { label: 'Plazo de Entrega', value: '30 días naturales', mandatory: true, accepted: true }
-              ].map((term, i) => (
-                <div key={i} className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm text-white">{term.label}</span>
-                        {term.mandatory && (
-                          <span className="text-[9px] px-2 py-0.5 bg-red-500/20 text-red-400 rounded">OBLIGATORIO</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-obsidian-text-muted">{term.value}</p>
-                    </div>
-                    {term.accepted ? (
-                      <CheckCircle2 size={16} className="text-[#45FF9A]" />
-                    ) : (
-                      <div className="w-4 h-4 rounded-full border border-white/20"></div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ObsidianCard>
-
-          {/* Escrow */}
-          <ObsidianCard className="border-2 border-yellow-500/30 bg-yellow-500/5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-normal text-white uppercase tracking-wider flex items-center gap-2">
-                <Lock size={14} className="text-yellow-400" />
-                Bóveda Escrow
-              </h3>
-              <span className="text-[9px] text-yellow-400 bg-yellow-500/20 px-2 py-1 rounded">BLOQUEADO</span>
-            </div>
-            <div className="text-3xl font-thin text-white mb-2">
-              {selectedNegotiation?.currentOffer.toLocaleString()} <span className="text-sm text-obsidian-text-muted">USDC</span>
-            </div>
-            <p className="text-xs text-obsidian-text-muted mb-4">
-              Los fondos serán transferidos a la bóveda de escrow al firmar el contrato y liberados al cumplirse las condiciones.
-            </p>
-            <div className="p-3 bg-white/[0.02] rounded border border-white/[0.05]">
-              <div className="text-[10px] text-obsidian-text-muted uppercase mb-1">Hash del Contrato</div>
-              <div className="flex items-center gap-2">
-                <Hash size={12} className="text-obsidian-accent" />
-                <span className="text-xs font-mono text-white">0x8f7a2e9c...4b1d3c8a</span>
-              </div>
-            </div>
-          </ObsidianCard>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-4 pb-6">
-            <button
-              onClick={() => setViewMode('detail')}
-              className="px-6 py-2 border border-white/[0.1] rounded-lg text-white hover:bg-white/[0.05] transition-all"
-            >
-              Cancelar
-            </button>
-            <ObsidianButton
-              onClick={() => {
-                alert('Contrato firmado exitosamente');
-                setViewMode('dashboard');
-              }}
-              icon={<CheckCircle size={16} />}
-            >
-              Firmar Contrato
-            </ObsidianButton>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
-
-  // --- Main Render ---
-  switch (viewMode) {
-    case 'dashboard':
-      return renderDashboard();
-    case 'create':
-      return renderCreate();
-    case 'detail':
-      return renderDetail();
-    case 'contract':
-      return renderContract();
-    default:
-      return renderDashboard();
-  }
 };
 
 export default NegotiationHub;

@@ -10,6 +10,7 @@ import NeuroFinance from './components/NeuroFinance';
 import OntologyCore from './components/OntologyCore';
 import SystemHealth from './components/SystemHealth';
 import SSIVault from './components/SSIVault';
+import ContentSocialStudio from './components/ContentSocialStudio';
 import { ObsidianCard } from './components/ui/ObsidianElements';
 import type { AuthState, LoginFormData } from './types';
 import { Wifi, WifiOff, Activity } from 'lucide-react';
@@ -21,7 +22,8 @@ import {
   OpportunitiesPanel,
   AlertsPanel,
   RevenueChart,
-  SystemMetrics
+  SystemMetrics,
+  MarketTopology
 } from './components/WarRoom';
 
 // --- WAR ROOM DASHBOARD PAGE ---
@@ -117,11 +119,11 @@ const WarRoomDashboard: React.FC = () => {
               <KPIPanel kpis={kpis} />
             </div>
 
-            {/* -- CENTER: CHART & EVENTS -- */}
+            {/* -- CENTER: TOPOLOGY & EVENTS -- */}
             <div className="col-span-12 md:col-span-6 row-span-11 flex flex-col gap-6 animate-[fadeIn_1s_ease-out_0.4s_both]">
-              {/* Revenue Chart */}
+              {/* Market Topology */}
               <ObsidianCard className="flex-[2] p-5">
-                <RevenueChart kpis={kpis} />
+                <MarketTopology kpis={kpis} opportunities={opportunities} />
               </ObsidianCard>
 
               {/* Event Stream */}
@@ -179,7 +181,7 @@ const App: React.FC = () => {
     error: null,
   });
 
-  const [currentView, setCurrentView] = useState<'war-room' | 'dto-lab' | 'swarm-orchestrator' | 'negotiation-hub' | 'avatar-studio' | 'bionic-sales' | 'neuro-finance' | 'ontology-core' | 'system-health' | 'ssi-vault'>('war-room');
+  const [currentView, setCurrentView] = useState<'war-room' | 'dto-lab' | 'swarm-orchestrator' | 'negotiation-hub' | 'avatar-studio' | 'content-social' | 'bionic-sales' | 'neuro-finance' | 'ontology-core' | 'system-health' | 'ssi-vault'>('war-room');
 
   const handleLogin = (data: LoginFormData) => {
     setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
@@ -229,6 +231,7 @@ const App: React.FC = () => {
                 {currentView === 'swarm-orchestrator' && <SwarmOrchestrator />}
                 {currentView === 'negotiation-hub' && <NegotiationHub />}
                 {currentView === 'avatar-studio' && <AvatarStudio />}
+                {currentView === 'content-social' && <ContentSocialStudio />}
                 {currentView === 'bionic-sales' && <BionicSales />}
                 {currentView === 'neuro-finance' && <NeuroFinance />}
                 {currentView === 'ontology-core' && <OntologyCore />}

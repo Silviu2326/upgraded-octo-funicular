@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, FlaskConical, Settings, LogOut, Network, Briefcase, ScanFace, BrainCircuit, Scale, Share2, HeartPulse, Fingerprint, ChevronRight, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, FlaskConical, Settings, LogOut, Network, Briefcase, ScanFace, BrainCircuit, Scale, Share2, HeartPulse, Fingerprint, ChevronRight, ChevronLeft, MessageSquareText } from 'lucide-react';
 
 interface SidebarProps {
-  currentView: 'war-room' | 'dto-lab' | 'swarm-orchestrator' | 'negotiation-hub' | 'avatar-studio' | 'bionic-sales' | 'neuro-finance' | 'ontology-core' | 'system-health' | 'ssi-vault';
-  onChangeView: (view: 'war-room' | 'dto-lab' | 'swarm-orchestrator' | 'negotiation-hub' | 'avatar-studio' | 'bionic-sales' | 'neuro-finance' | 'ontology-core' | 'system-health' | 'ssi-vault') => void;
+  currentView: 'war-room' | 'dto-lab' | 'swarm-orchestrator' | 'negotiation-hub' | 'avatar-studio' | 'content-social' | 'bionic-sales' | 'neuro-finance' | 'ontology-core' | 'system-health' | 'ssi-vault';
+  onChangeView: (view: 'war-room' | 'dto-lab' | 'swarm-orchestrator' | 'negotiation-hub' | 'avatar-studio' | 'content-social' | 'bionic-sales' | 'neuro-finance' | 'ontology-core' | 'system-health' | 'ssi-vault') => void;
   onLogout: () => void;
 }
 
@@ -29,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onL
       title: 'GROWTH',
       items: [
         { id: 'avatar-studio', label: 'Avatar Studio', icon: <ScanFace size={20} /> },
+        { id: 'content-social', label: 'Social Studio', icon: <MessageSquareText size={20} /> },
         { id: 'bionic-sales', label: 'Bionic Sales', icon: <BrainCircuit size={20} /> },
       ]
     },
